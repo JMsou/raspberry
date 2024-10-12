@@ -33,18 +33,19 @@ def do_thing(t):
     temperature = 27 - (reading - 0.706)/0.001721
     adc_res = ADC(0) #GP26
     duty = adc_res.read_u16()
-    led_level = round(duty/65535*10)
+    light_level = round(duty/65535*10)
     year, month, day, weekday, hour, minute ,second ,subsecond= rtc.datetime()
     adc_value = adc_light.read_u16()
     datetime_str = f"{year}-{month}-{day} {hour}:{minute}:{second}"
     print(f'''
 {datetime_str}
-可變電阻阻值={led_level}k
+可變電阻阻值={light_level}k
 光線={adc_value}
 vol. = {reading}V
-temp.= {temperature}C''')
+temp.= {temperature}°C''')
+    mqtt.publish('SA-52/LED_LEVEL', f'{light_level}')
     mqtt.publish('SA-52/TEMPERATURE', f'{temperature}')
-    
+    mqtt.publish('SA-52/LIGHT_LEVEL', f'{adc_value}')
     
 def do_thing1(t):
     '''
@@ -57,15 +58,7 @@ def do_thing1(t):
     
 
 def main():
-    try:
-        tools.connect()
-    except RuntimeError as e:
-        print(e)
-    except Exception:
-        print('莫名失敗')
-    else:    
-        Timer(period=1000, mode=Timer.PERIODIC, callback=do_thing)
-        Timer(period=1000, mode=Timer.PERIODIC, callback=do_thing1)
+    pass
     
 if __name__ == "__main__":
     adc = ADC(4) # built-in thermal sensor
@@ -74,15 +67,29 @@ if __name__ == "__main__":
     rtc = RTC()
     conversion_factor = 3.3/65535
     
-    #MQTT
-    SERVER = "192.168.0.252"
-    CLIENT_ID = binascii.hexlify(machine.unique_id())
-    mqtt = MQTTClient(CLIENT_ID, SERVER,user='pi',password='raspberry')
-    mqtt.connect()
+    #連進區域Wifi
+    try:
+        tools.connect()
+    except RuntimeError as e:
+        print(e)
+    except Exception:
+        print('莫名失敗')
+    else:
+        #MQTT
+        SERVER = "192.168.0.252"
+        CLIENT_ID = binascii.hexlify(machine.unique_id())
+        mqtt = MQTTClient(CLIENT_ID, SERVER,user='pi',password='raspberry')
+        mqtt.connect()
+        Timer(period=1000, mode=Timer.PERIODIC, callback=do_thing)
+        Timer(period=1000, mode=Timer.PERIODIC, callback=do_thing1)
+            
+    
     
     #執行主程式
     main()
     
+
+
 
 
 
