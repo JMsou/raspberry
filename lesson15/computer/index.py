@@ -43,6 +43,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
 def on_message(client, userdata, msg):
     global led_origin_value
     global temperature_origin_value
+    global light_origin_value
     topic = msg.topic
     value = msg.payload.decode()
     if topic == 'SA-52/LED_LEVEL':
@@ -58,6 +59,12 @@ def on_message(client, userdata, msg):
             temperature_origin_value = temperature_value
             record(topic,temperature_value)
             print(f'溫度：{value}')
+    if topic == 'SA-52/LIGHT_LEVEL':
+        light_state = float(value)
+        if  light_origin_value != light_state:
+            light_origin_value = light_state
+            record(topic,light_state)
+            print(f'led_value:{light_state}')
 
 def main():
     client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
@@ -74,4 +81,5 @@ def main():
 if __name__ == "__main__":
     led_origin_value = 0 
     temperature_origin_value = 0.0
+    light_origin_value = None
     main()

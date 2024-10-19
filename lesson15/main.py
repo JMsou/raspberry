@@ -26,26 +26,29 @@ while True:
 def do_thing(t):
     '''
     :param t:Timer的實體
-    負責RTC、可變電阻、光線及內建溫度，目前每1秒執行一次
+    負責可變電阻、內建溫度、光線及RTC，目前每1秒執行一次
     '''
-    
-    reading = adc.read_u16() * conversion_factor
-    temperature = round(27 - (reading - 0.706)/0.001721,2)
     adc_res = ADC(0) #GP26
     duty = adc_res.read_u16()
     light_level = round(duty/65535*10)
-    year, month, day, weekday, hour, minute ,second ,subsecond= rtc.datetime()
+    mqtt.publish('SA-52/LED_LEVEL', f'{light_level}')
+    
+    reading = adc.read_u16() * conversion_factor
+    temperature = round(27 - (reading - 0.706)/0.001721,2)
+    mqtt.publish('SA-52/TEMPERATURE', f'{temperature}')
+    
     adc_value = adc_light.read_u16()
+    light_state = 0 if adc_value < 1000 else 1
+    mqtt.publish('SA-52/LIGHT_LEVEL', f'{light_state}')
+    
+    year, month, day, weekday, hour, minute ,second ,subsecond= rtc.datetime()
     datetime_str = f"{year}-{month}-{day} {hour}:{minute}:{second}"
     print(f'''
 {datetime_str}
 可變電阻阻值={light_level}k
-光線={adc_value}
+光線={adc_value} -> {light_state}
 vol. = {reading}V
 temp.= {temperature}°C''')
-    mqtt.publish('SA-52/LED_LEVEL', f'{light_level}')
-    mqtt.publish('SA-52/TEMPERATURE', f'{temperature}')
-    mqtt.publish('SA-52/LIGHT_LEVEL', f'{adc_value}')
     
 def do_thing1(t):
     '''
