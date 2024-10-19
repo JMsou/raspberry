@@ -30,7 +30,7 @@ def do_thing(t):
     '''
     
     reading = adc.read_u16() * conversion_factor
-    temperature = 27 - (reading - 0.706)/0.001721
+    temperature = round(27 - (reading - 0.706)/0.001721,2)
     adc_res = ADC(0) #GP26
     duty = adc_res.read_u16()
     light_level = round(duty/65535*10)
