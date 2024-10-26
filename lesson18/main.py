@@ -37,10 +37,12 @@ def do_thing(t):
     reading = adc.read_u16() * conversion_factor
     temperature = round(27 - (reading - 0.706)/0.001721,2)
     mqtt.publish('SA-52/TEMPERATURE', f'{temperature}')
+    blynk_mqtt.publish('ds/temperature', f'{temperature}')
     
     adc_value = adc_light.read_u16()
-    light_state = 0 if adc_value < 1000 else 1
+    light_state = 0 if adc_value < 1500 else 1
     mqtt.publish('SA-52/LIGHT_STATE', f'{light_state}')
+    blynk_mqtt.publish('ds/light_state', f'{light_state}')
     
     year, month, day, weekday, hour, minute ,second ,subsecond= rtc.datetime()
     datetime_str = f"{year}-{month}-{day} {hour}:{minute}:{second}"
@@ -67,7 +69,7 @@ def main():
     print(config.BLYNK_TEMPLATE_ID)
     print(config.BLYNK_AUTH_TOKEN)
     blynk_mqtt = MQTTClient(config.BLYNK_TEMPLATE_ID, config.BLYNK_MQTT_BROKER,user='device',password=config.BLYNK_AUTH_TOKEN,keepalive=60)
-    blynk_mqtt.connect
+    blynk_mqtt.connect()
     
     
 if __name__ == "__main__":
@@ -90,7 +92,7 @@ if __name__ == "__main__":
         CLIENT_ID = binascii.hexlify(machine.unique_id())
         mqtt = MQTTClient(CLIENT_ID, SERVER,user='pi',password='raspberry')
         mqtt.connect()
-        Timer(period=5000, mode=Timer.PERIODIC, callback=do_thing)
+        Timer(period=1000, mode=Timer.PERIODIC, callback=do_thing)
         Timer(period=5000, mode=Timer.PERIODIC, callback=do_thing1)
     blynk_mqtt = None        
     
